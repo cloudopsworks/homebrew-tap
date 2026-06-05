@@ -35,5 +35,4 @@ cask "tronador-cli" do
   binary "tronador"
 
   # No zap stanza required
-
 end
