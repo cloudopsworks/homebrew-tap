@@ -25,7 +25,7 @@ cask "tronador-cli" do
   end
 
   name "tronador-cli"
-  desc "CLI tool for CloudOps Works Tronador workflows and AWS automation."
+  desc "CLI tool for CloudOps Works Tronador workflows and AWS automation"
   homepage "https://github.com/cloudopsworks/tronador-cli"
 
   livecheck do
