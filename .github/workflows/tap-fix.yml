@@ -25,7 +25,9 @@ jobs:
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PULL_REQUEST: ${{ github.event.pull_request.number }}
-        run: brew style --fix .
+        run: | 
+          brew style --fix .
+          git commit -am "fix: brew style fix"
 
       - name: Push commits
         uses: Homebrew/actions/git-try-push@main
