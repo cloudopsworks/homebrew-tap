@@ -2,6 +2,9 @@ name: brew tap-fix
 
 on:
   pull_request:
+    types:
+      - opened
+      - synchronize
 
 jobs:
   tap-fix:
