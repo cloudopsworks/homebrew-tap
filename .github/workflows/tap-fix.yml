@@ -2,19 +2,14 @@ name: brew tap-fix
 
 on:
   pull_request:
-    types:
-      - opened
-      - synchronize
 
 jobs:
   tap-fix:
+    # Fork PRs still get the read-only style check in test-bot.
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
-      actions: read
-      checks: read
       contents: write
-      issues: read
-      pull-requests: write
     steps:
       - name: Set up Homebrew
         uses: Homebrew/actions/setup-homebrew@main
@@ -24,15 +19,19 @@ jobs:
       - name: Set up git
         uses: Homebrew/actions/git-user-config@main
 
-      - name: Fix tap
+      - name: Fix style on the PR head
         env:
-          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PULL_REQUEST: ${{ github.event.pull_request.number }}
-        run: | 
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          # setup-homebrew checks out the PR merge commit, not the contributor's commit.
+          git checkout --detach "$PR_HEAD_SHA"
           brew style --fix .
-          git commit -am "fix: brew style fix"
+          if git diff --quiet; then
+            echo "No style fixes needed."
+            exit 0
+          fi
 
-      - name: Push commits
-        uses: Homebrew/actions/git-try-push@main
-        with:
-          branch: ${{ github.event.pull_request.head.ref }}
+          git commit -am "fix: brew style fix"
+          # Publish only if the branch still exists at the revision we formatted.
+          git push --force-with-lease="refs/heads/$PR_BRANCH:$PR_HEAD_SHA" origin "HEAD:refs/heads/$PR_BRANCH"
