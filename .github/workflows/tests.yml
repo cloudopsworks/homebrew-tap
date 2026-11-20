@@ -40,6 +40,20 @@ jobs:
       - run: brew test-bot --only-setup
 
       - run: brew test-bot --only-tap-syntax
+      - name: Verify changed cask downloads and checksums
+        if: github.event_name == 'pull_request' && runner.os == 'Linux'
+        working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          TAP: ${{ steps.set-up-homebrew.outputs.tap-name }}
+        run: |
+          git diff --no-renames --name-only --diff-filter=AM -z "$BASE_SHA" HEAD -- 'Casks/*.rb' |
+            while IFS= read -r -d '' file; do
+              token=${file##*/}
+              brew fetch --cask --all-platforms "$TAP/${token%.rb}"
+            done
+
       - run: brew test-bot --only-formulae
         if: github.event_name == 'pull_request'
 
@@ -49,3 +63,4 @@ jobs:
         with:
           name: bottles_${{ matrix.os }}
           path: '*.bottle.*'
+          if-no-files-found: ignore # Cask-only PRs do not produce bottles.
